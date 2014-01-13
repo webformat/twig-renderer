@@ -20,9 +20,9 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
      */
     public $fileExtension = '.twig';
     /**
-      * @var array Twig environment options
-      * @see http://twig.sensiolabs.org/doc/api.html#environment-options
-      */
+     * @var array Twig environment options
+     * @see http://twig.sensiolabs.org/doc/api.html#environment-options
+     */
     public $options = array();
     /**
      * @var array Objects or static classes
@@ -62,9 +62,10 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
      */
     public $lexerOptions = array();
 
-    public $paths = array();
+    public $customPaths = array();
 
     private $_twig;
+    private $_paths;
 
     public function init()
     {
@@ -77,12 +78,18 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
         $theme = $app->getTheme();
 
         if ($theme !== null) {
-            $this->paths[] = $theme->getBasePath();
+            $this->_paths[] = $theme->getBasePath();
         }
 
-        $this->paths[] = $app->getBasePath();
+        $this->_paths[] = $app->getBasePath();
 
-        $loader = new Twig_Loader_Filesystem($this->paths);
+        foreach($this->customPaths as &$path) {
+            $path = $app->getBasePath() . '/' . $path;
+        }
+
+        $this->_paths = array_merge($this->_paths, $this->customPaths);
+
+        $loader = new Twig_Loader_Filesystem($this->_paths);
 
         $defaultOptions = array(
             'autoescape' => false, // false because other way Twig escapes all HTML in templates
@@ -140,7 +147,7 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
         // current controller properties will be accessible as {{ this.property }}
         $data['this'] = $context;
 
-        foreach($this->paths as $path) {
+        foreach($this->_paths as $path) {
             if(strpos($sourceFile, $path) === 0) {
                 $sourceFile = substr($sourceFile, strlen($path));
                 break;
@@ -234,19 +241,19 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
                 // Just a name of function
                 case is_string($func):
                     $twigElement = new $classFunction($func);
-                break;
+                    break;
                 // Name of function + options array
                 case is_array($func) && is_string($func[0]) && isset($func[1]) && is_array($func[1]):
                     $twigElement = new $classFunction($func[0], $func[1]);
-                break;
+                    break;
             }
 
             if ($twigElement !== null) {
                 $this->_twig->{'add'.$classType}($name, $twigElement);
             } else {
                 throw new CException(Yii::t('yiiext',
-                                             'Incorrect options for "{classType}" [{name}]',
-                                             array('{classType}'=>$classType, '{name}'=>$name)));
+                    'Incorrect options for "{classType}" [{name}]',
+                    array('{classType}'=>$classType, '{name}'=>$name)));
             }
         }
     }
