@@ -62,10 +62,11 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
      */
     public $lexerOptions = array();
 
-    private $_twig;
-    private $_paths;
+    public $paths = array();
 
-    function init()
+    private $_twig;
+
+    public function init()
     {
         require Yii::getPathOfAlias($this->twigPathAlias).'/Autoloader.php';
         Yii::registerAutoloader(array('Twig_Autoloader', 'autoload'), true);
@@ -75,15 +76,13 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
         /** @var $theme CTheme */
         $theme = $app->getTheme();
 
-        $this->_paths = array();
-
         if ($theme !== null) {
-            $this->_paths[] = $theme->getBasePath();
+            $this->paths[] = $theme->getBasePath();
         }
 
-        $this->_paths[] = $app->getBasePath();
+        $this->paths[] = $app->getBasePath();
 
-        $loader = new Twig_Loader_Filesystem($this->_paths);
+        $loader = new Twig_Loader_Filesystem($this->paths);
 
         $defaultOptions = array(
             'autoescape' => false, // false because other way Twig escapes all HTML in templates
@@ -141,7 +140,7 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
         // current controller properties will be accessible as {{ this.property }}
         $data['this'] = $context;
 
-        foreach($this->_paths as $path) {
+        foreach($this->paths as $path) {
             if(strpos($sourceFile, $path) === 0) {
                 $sourceFile = substr($sourceFile, strlen($path));
                 break;
