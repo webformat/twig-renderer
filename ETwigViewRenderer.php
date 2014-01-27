@@ -69,7 +69,7 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
 
     public function init()
     {
-        require Yii::getPathOfAlias($this->twigPathAlias).'/Autoloader.php';
+        require Yii::getPathOfAlias($this->twigPathAlias) . '/Autoloader.php';
         Yii::registerAutoloader(array('Twig_Autoloader', 'autoload'), true);
 
         $app = Yii::app();
@@ -83,7 +83,7 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
 
         $this->_paths[] = $app->getBasePath();
 
-        foreach($this->customPaths as &$path) {
+        foreach ($this->customPaths as &$path) {
             $path = $app->getBasePath() . '/' . $path;
         }
 
@@ -101,6 +101,8 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
 
         // Adding Yii::app() object to globals
         $this->_twig->addGlobal('App', $app);
+        $Yii = new ETwigViewRendererStaticClassProxy('Yii');
+        $this->_twig->addGlobal('Yii', $Yii);
 
         // Adding Yii's core static classes proxy as 'C' shortcut (usage: {{C.Html.tag(...)}})
         $this->_twig->addGlobal('C', new ETwigViewRendererYiiCoreStaticClassesProxy());
@@ -147,8 +149,8 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
         // current controller properties will be accessible as {{ this.property }}
         $data['this'] = $context;
 
-        foreach($this->_paths as $path) {
-            if(strpos($sourceFile, $path) === 0) {
+        foreach ($this->_paths as $path) {
+            if (strpos($sourceFile, $path) === 0) {
                 $sourceFile = substr($sourceFile, strlen($path));
                 break;
             }
@@ -232,7 +234,7 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
      */
     private function _addCustom($classType, $elements)
     {
-        $classFunction = 'Twig_'.$classType.'_Function';
+        $classFunction = 'Twig_' . $classType . '_Function';
 
         foreach ($elements as $name => $func) {
             $twigElement = null;
@@ -249,11 +251,11 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
             }
 
             if ($twigElement !== null) {
-                $this->_twig->{'add'.$classType}($name, $twigElement);
+                $this->_twig->{'add' . $classType}($name, $twigElement);
             } else {
                 throw new CException(Yii::t('yiiext',
                     'Incorrect options for "{classType}" [{name}]',
-                    array('{classType}'=>$classType, '{name}'=>$name)));
+                    array('{classType}' => $classType, '{name}' => $name)));
             }
         }
     }
@@ -270,7 +272,8 @@ class ETwigViewRendererStaticClassProxy
 {
     private $_staticClassName;
 
-    public function __construct($staticClassName) {
+    public function __construct($staticClassName)
+    {
         $this->_staticClassName = $staticClassName;
     }
 
@@ -305,13 +308,13 @@ class ETwigViewRendererYiiCoreStaticClassesProxy
 
     function __isset($className)
     {
-        return (isset($_classes[$className]) || class_exists('C'.$className));
+        return (isset($_classes[$className]) || class_exists('C' . $className));
     }
 
     function __get($className)
     {
         if (!isset($this->_classes[$className])) {
-            $this->_classes[$className] = new ETwigViewRendererStaticClassProxy('C'.$className);
+            $this->_classes[$className] = new ETwigViewRendererStaticClassProxy('C' . $className);
         }
 
         return $this->_classes[$className];
